@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test Page</title>
+</head>
+<body>
+    <h1>Test API</h1>
+    
+    <form id="apiForm">
+        <label for="apiEndpoint">API Endpoint:</label>
+        <input type="text" id="apiEndpoint" name="apiEndpoint" value="/api/test" required>
+        <br><br>
+
+        <label for="apiMethod">Method:</label>
+        <select id="apiMethod" name="apiMethod">
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+        </select>
+        <br><br>
+
+        <label for="clientId">Client ID:</label>
+        <input type="text" id="clientId" name="clientId" placeholder="Enter Client ID">
+        <br><br>
+
+        <label for="clientSecret">Client Secret:</label>
+        <input type="password" id="clientSecret" name="clientSecret" placeholder="Enter Client Secret">
+        <br><br>
+
+        <label for="authHeader">Authorization Header (Optional):</label>
+        <input type="text" id="authHeader" name="authHeader" placeholder="Bearer token">
+        <br><br>
+
+        <label for="apiParams">Request Parameters (grant_type, etc.):</label><br>
+        <textarea id="apiParams" name="apiParams" rows="3" cols="50" placeholder="grant_type=client_credentials&scope=api"></textarea>
+        <br><br>
+
+        <label for="apiBody">Request Body (JSON):</label><br>
+        <textarea id="apiBody" name="apiBody" rows="5" cols="50"></textarea>
+        <br><br>
+
+        <button type="button" onclick="testApi()">Send Request</button>
+    </form>
+
+    <h2>Response:</h2>
+    <pre id="responseOutput"></pre>
+
+    <script>
+        function base64Encode(str) {
+            return btoa(str).replace(/=/g, ''); // Base64 encode and remove '='
+        }
+
+        function testApi() {
+            const endpoint = document.getElementById('apiEndpoint').value;
+            const method = document.getElementById('apiMethod').value;
+            const body = document.getElementById('apiBody').value;
+            const authHeader = document.getElementById('authHeader').value;
+            const clientId = document.getElementById('clientId').value;
+            const clientSecret = document.getElementById('clientSecret').value;
+            const params = document.getElementById('apiParams').value;
+
+            // Build authorization header
+            let authorization = authHeader;
+            if (clientId && clientSecret) {
+                const basicAuth = base64Encode(`${clientId}:${clientSecret}`);
+                authorization = `Basic ${basicAuth}`;
+            }
+
+            const url = new URL(endpoint, window.location.origin);
+            if (params) {
+                const urlParams = new URLSearchParams(params);
+                url.search = urlParams.toString();
+            }
+
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': authorization
+                },
+                body: method !== 'GET' && body ? body : null,
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('responseOutput').textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                document.getElementById('responseOutput').textContent = 'Error: ' + error;
+            });
+        }
+    </script>
+</body>
+</html>
